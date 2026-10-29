@@ -1,0 +1,15 @@
+{
+  "name": "video-proxy-vercel",
+  "version": "1.0.0",
+  "description": "Vercel Proxy untuk streaming video Blogger dan video.g",
+  "main": "api/stream.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
