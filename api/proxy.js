@@ -1,6 +1,5 @@
-// Contoh sederhana Vercel Serverless Function (Node.js)
+// api/proxy.js (Backend Vercel - Node.js)
 export default async function handler(req, res) {
-  // Izinkan CORS agar bisa diakses dari domain Blogger Anda
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
 
@@ -10,22 +9,31 @@ export default async function handler(req, res) {
 
   const { url } = req.query;
   if (!url) {
-    return res.status(400).json({ error: 'URL video tidak ditemukan' });
+    return res.status(400).json({ error: 'URL tidak valid' });
   }
 
   try {
-    // Di sini Anda bisa menambahkan logika backend untuk:
-    // 1. Mengubah URL YouTube/Blogger menjadi link stream langsung (menggunakan pustaka eksternal atau API pihak ketiga).
-    // 2. Atau melakukan fetch dengan header spoofing (User-Agent) jika itu adalah direct link dari Blogger.
-
-    // Contoh jika ingin meneruskan/memproksi data langsung dari token Blogger:
     const targetUrl = decodeURIComponent(url);
-    
-    // Contoh response balik berupa link direct atau data stream
-    return res.status(200).json({
-      success: true,
-      directUrl: targetUrl // Atau hasil ekstrak link mp4 asli
+
+    // Melakukan fetch ke video target dari server Vercel dengan menyamar sebagai browser desktop
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.blogger.com/'
+      }
     });
+
+    if (!response.ok) {
+      throw new Error(`Gagal mengambil sumber video: ${response.statusText}`);
+    }
+
+    // Teruskan tipe konten (misal: video/mp4 atau text/html) ke client
+    const contentType = response.headers.get('content-type') || 'video/mp4';
+    res.setHeader('Content-Type', contentType);
+
+    // Ambil data buffer/stream dari video dan kirimkan ke frontend
+    const buffer = await response.arrayBuffer();
+    return res.status(200).send(Buffer.from(buffer));
 
   } catch (error) {
     return res.status(500).json({ error: error.message });
